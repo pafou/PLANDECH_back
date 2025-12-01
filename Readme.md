@@ -1,334 +1,113 @@
-# Backend API Documentation
+# Plan de Charge Backend API
+
+## Overview
 
-This document provides an overview of the available API endpoints in the backend server.
+This is the backend API for the Plan de Charge system, built with Node.js, Express, and PostgreSQL. The API provides endpoints for managing users, teams, subjects, and administrative tasks.
 
-## Table of Contents
+## Features
 
-- [Data Endpoints](#data-endpoints)
-- [Person Endpoints](#person-endpoints)
-- [Admin Endpoints](#admin-endpoints)
-- [Team Endpoints](#team-endpoints)
-- [Subject Endpoints](#subject-endpoints)
-- [Subject Type Endpoints](#subject-type-endpoints)
-- [Authentication Endpoints](#authentication-endpoints)
-- [Utility Endpoints](#utility-endpoints)
-- [Color Mapping Endpoints](#color-mapping-endpoints)
+- RESTful API with comprehensive endpoints
+- JWT-based authentication
+- PostgreSQL database integration
+- Comprehensive error handling
+- API documentation
 
-## Data Endpoints
+## Project Structure
 
-### Get All Data
+```
+back/
+├── .env                  # Environment variables
+├── sql/                  # SQL scripts for database setup
+├── src/                  # Source code
+│   └── index.ts          # Main server file
+├── package.json          # Project dependencies and scripts
+├── tsconfig.json         # TypeScript configuration
+└── README.md             # Project documentation
+```
 
-- **Endpoint:** `/api/data`
-- **Method:** GET
-- **Description:** Fetches all data from the database.
-- **Response:** JSON array of data objects.
+## Getting Started
 
-### Get Data as HTML Table
+### Prerequisites
 
-- **Endpoint:** `/api/list_all`
-- **Method:** GET
-- **Description:** Fetches all data and returns it as an HTML table.
-- **Response:** HTML table.
+- Node.js (v16 or later)
+- npm (v6 or later)
+- PostgreSQL database
 
-## Person Endpoints
+### Installation
 
-### Get All Persons
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd back
+   ```
 
-- **Endpoint:** `/api/persons`
-- **Method:** GET
-- **Description:** Fetches all persons from the database.
-- **Response:** JSON array of person objects.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-### Get Team Managers
+3. Set up environment variables:
+   Create a `.env` file in the root directory with the following content:
+   ```
+   DATABASE_URL=postgresql://username:password@localhost:5432/database_name
+   JWT_SECRET=your_secret_key
+   PORT=5001
+   ```
 
-- **Endpoint:** `/api/team-managers`
-- **Method:** GET
-- **Description:** Fetches all team managers from the database.
-- **Response:** JSON array of team manager objects.
+### Database Setup
 
-### Get Team Members
+1. Create a PostgreSQL database
+2. Run the SQL scripts in the `sql/` directory to set up the database schema and initial data:
+   ```bash
+   psql -U your_username -d your_database -f sql/10_create_tables.sql
+   psql -U your_username -d your_database -f sql/99_01_truncate_tables.sql
+   psql -U your_username -d your_database -f sql/99_02_insert_t_pers.sql
+   psql -U your_username -d your_database -f sql/99_03_0_insert_t_subject_types.sql
+   psql -U your_username -d your_database -f sql/99_03_1_insert_t_subjects.sql
+   psql -U your_username -d your_database -f sql/99_04_insert_t_comment.sql
+   psql -U your_username -d your_database -f sql/99_05_color_mapping.sql
+   psql -U your_username -d your_database -f sql/99_07_insert_t_teams.sql
+   psql -U your_username -d your_database -f sql/99_08_update_t_pers.sql
+   psql -U your_username -d your_database -f sql/99_10_insert_t_admin.sql
+   psql -U your_username -d your_database -f sql/99_12_insert_t_pdc.sql
+   ```
 
-- **Endpoint:** `/api/team-members`
-- **Method:** GET
-- **Description:** Fetches all team members from the database.
-- **Response:** JSON array of team member objects.
+### Running the Server
 
-### Update Team Member
+1. Start the server:
+   ```bash
+   npm start
+   ```
 
-- **Endpoint:** `/api/team-members/update`
-- **Method:** PUT
-- **Description:** Updates a team member's team.
-- **Request Body:** JSON object with `id_pers` and `id_team`.
-- **Response:** JSON object with success message.
+2. The API will be available at [http://localhost:5001](http://localhost:5001)
 
-### Create Team Member
+## API Documentation
 
-- **Endpoint:** `/api/team-members/create`
-- **Method:** POST
-- **Description:** Creates a new team member.
-- **Request Body:** JSON object with `id_pers`, `name`, `firstname`, and `id_team`.
-- **Response:** JSON object with success message and new team member ID.
+The API provides endpoints for managing various aspects of the Plan de Charge system. The existing API documentation is included in this README file.
 
-### Update Team Member's Team
+## Environment Variables
 
-- **Endpoint:** `/api/team-members/:id`
-- **Method:** PUT
-- **Description:** Updates a team member's team.
-- **Request Body:** JSON object with `id_team`.
-- **Response:** JSON object with success message.
+The application uses the following environment variables:
 
-### Delete Team Member
+- `DATABASE_URL`: PostgreSQL connection string
+- `JWT_SECRET`: Secret key for JWT token generation
+- `PORT`: Server port (default: 5001)
 
-- **Endpoint:** `/api/team-members/:id`
-- **Method:** DELETE
-- **Description:** Deletes a team member.
-- **Response:** JSON object with success message.
+## Contributing
 
-## Admin Endpoints
+1. Fork the repository
+2. Create a new branch (`git checkout -b feature/your-feature`)
+3. Commit your changes (`git commit -am 'Add your feature'`)
+4. Push to the branch (`git push origin feature/your-feature`)
+5. Create a new Pull Request
 
-### Get All Admins
+## License
 
-- **Endpoint:** `/api/admins`
-- **Method:** GET
-- **Description:** Fetches all admins from the database.
-- **Response:** JSON array of admin objects.
+This project is licensed under the ISC License. See the LICENSE file for details.
 
-### Delete Admin
+## Acknowledgments
 
-- **Endpoint:** `/api/admins/:id`
-- **Method:** DELETE
-- **Description:** Deletes an admin.
-- **Response:** JSON object with success message.
-
-### Add Admin
-
-- **Endpoint:** `/api/admins`
-- **Method:** POST
-- **Description:** Adds a user as an admin.
-- **Request Body:** JSON object with `id_pers`.
-- **Response:** JSON object with success message.
-
-## Team Endpoints
-
-### Get All Teams
-
-- **Endpoint:** `/api/teams`
-- **Method:** GET
-- **Description:** Fetches all teams and their managers from the database.
-- **Response:** JSON array of team objects.
-
-### Get Teams with Managers
-
-- **Endpoint:** `/api/teams-with-managers`
-- **Method:** GET
-- **Description:** Fetches all teams with their managers from the database.
-- **Response:** JSON array of team objects.
-
-### Delete Team
-
-- **Endpoint:** `/api/teams/:id`
-- **Method:** DELETE
-- **Description:** Deletes a team.
-- **Response:** JSON object with success message.
-
-### Add Team
-
-- **Endpoint:** `/api/teams`
-- **Method:** POST
-- **Description:** Adds a new team.
-- **Request Body:** JSON object with `team` and `manager_id`.
-- **Response:** JSON object with success message.
-
-### Remove Manager from Team
-
-- **Endpoint:** `/api/teams/:teamId/managers/:managerId`
-- **Method:** DELETE
-- **Description:** Removes a manager from a team.
-- **Response:** JSON object with success message.
-
-### Add Manager to Team
-
-- **Endpoint:** `/api/teams/:teamId/managers`
-- **Method:** POST
-- **Description:** Adds a manager to a team.
-- **Request Body:** JSON object with `managerId`.
-- **Response:** JSON object with success message.
-
-## Subject Endpoints
-
-### Get All Subjects
-
-- **Endpoint:** `/api/subjects`
-- **Method:** GET
-- **Description:** Fetches all subjects from the database.
-- **Response:** JSON array of subject objects.
-
-### Delete Subject
-
-- **Endpoint:** `/api/subjects/:id`
-- **Method:** DELETE
-- **Description:** Deletes a subject.
-- **Response:** JSON object with success message.
-
-### Update Subject
-
-- **Endpoint:** `/api/subjects/:id`
-- **Method:** PUT
-- **Description:** Updates a subject.
-- **Request Body:** JSON object with `subject` and/or `id_subject_type`.
-- **Response:** JSON object with success message.
-
-### Add Subject
-
-- **Endpoint:** `/api/subjects`
-- **Method:** POST
-- **Description:** Adds a new subject.
-- **Request Body:** JSON object with `subject` and `id_subject_type`.
-- **Response:** JSON object with success message and new subject ID.
-
-## Subject Type Endpoints
-
-### Get All Subject Types
-
-- **Endpoint:** `/api/subject-types`
-- **Method:** GET
-- **Description:** Fetches all subject types from the database.
-- **Response:** JSON array of subject type objects.
-
-### Add Subject Type
-
-- **Endpoint:** `/api/subject-types`
-- **Method:** POST
-- **Description:** Adds a new subject type.
-- **Request Body:** JSON object with `type`.
-- **Response:** JSON object with success message and new subject type ID.
-
-### Update Subject Type
-
-- **Endpoint:** `/api/subject-types/:id`
-- **Method:** PUT
-- **Description:** Updates a subject type.
-- **Request Body:** JSON object with `type`.
-- **Response:** JSON object with success message.
-
-### Delete Subject Type
-
-- **Endpoint:** `/api/subject-types/:id`
-- **Method:** DELETE
-- **Description:** Deletes a subject type.
-- **Response:** JSON object with success message.
-
-### Update Subject Type Color
-
-- **Endpoint:** `/api/subject-types/:id/color`
-- **Method:** PUT
-- **Description:** Updates a subject type color.
-- **Request Body:** JSON object with `color`.
-- **Response:** JSON object with success message.
-
-## Authentication Endpoints
-
-### Generate JWT Token
-
-- **Endpoint:** `/api/generate-token`
-- **Method:** POST
-- **Description:** Generates a JWT token for a selected user.
-- **Request Body:** JSON object with `userId`.
-- **Response:** JSON object with token.
-
-### Check if User is Admin
-
-- **Endpoint:** `/api/is-admin`
-- **Method:** GET
-- **Description:** Checks if a user is an admin.
-- **Headers:** Authorization header with Bearer token.
-- **Response:** JSON object with `isAdmin` boolean.
-
-### Check if User is Manager
-
-- **Endpoint:** `/api/is-manager`
-- **Method:** GET
-- **Description:** Checks if a user is a manager and which team they manage.
-- **Headers:** Authorization header with Bearer token.
-- **Response:** JSON object with `isManager` boolean and `team` string if manager.
-
-## Utility Endpoints
-
-### Add New Line
-
-- **Endpoint:** `/api/addLine`
-- **Method:** POST
-- **Description:** Adds a new line to the database.
-- **Request Body:** JSON object with `name`, `firstname`, and `subject`.
-- **Response:** JSON array of data objects.
-
-### Add New Line (Alternative)
-
-- **Endpoint:** `/api/addNewLine`
-- **Method:** POST
-- **Description:** Adds a new line to the database using person and subject IDs.
-- **Request Body:** JSON object with `id_pers` and `id_subject`.
-- **Response:** JSON array of data objects.
-
-### Submit Data
-
-- **Endpoint:** `/api/submit`
-- **Method:** POST
-- **Description:** Submits data to the database.
-- **Request Body:** JSON object with `id_pers`, `id_subject`, `month`, and `load`.
-- **Response:** JSON object with success message.
-
-### Update Comment
-
-- **Endpoint:** `/api/updateComment`
-- **Method:** POST
-- **Description:** Updates a comment in the database.
-- **Request Body:** JSON object with `id_pers`, `id_subject`, and `comment`.
-- **Response:** JSON object with success message.
-
-### Get Related Persons
-
-- **Endpoint:** `/api/related-persons`
-- **Method:** GET
-- **Description:** Gets related persons based on id_pers.
-- **Query Parameters:** `id_pers` (required)
-- **Response:** JSON array of person objects.
-
-### Root Endpoint
-
-- **Endpoint:** `/`
-- **Method:** GET
-- **Description:** Returns a simple message.
-- **Response:** Plain text message.
-
-## Color Mapping Endpoints
-
-### Get Color Mapping
-
-- **Endpoint:** `/api/color-mapping`
-- **Method:** GET
-- **Description:** Fetches color mapping from the database.
-- **Response:** JSON array of color mapping objects.
-
-### Update Color Mapping
-
-- **Endpoint:** `/api/color-mapping/:id`
-- **Method:** PUT
-- **Description:** Updates a color mapping.
-- **Request Body:** JSON object with `color_hex`.
-- **Response:** JSON object with success message.
-
-### Add Color Mapping
-
-- **Endpoint:** `/api/color-mapping`
-- **Method:** POST
-- **Description:** Adds a new color mapping.
-- **Request Body:** JSON object with `id_map` and `color_hex`.
-- **Response:** JSON object with success message.
-
-### Delete Color Mapping
-
-- **Endpoint:** `/api/color-mapping/:id`
-- **Method:** DELETE
-- **Description:** Deletes a color mapping.
-- **Response:** JSON object with success message.
+- Built with Express.js and TypeScript
+- Uses PostgreSQL for database storage
+- JWT for authentication
+- CORS for cross-origin resource sharing
