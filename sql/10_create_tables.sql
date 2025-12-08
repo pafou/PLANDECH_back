@@ -1,6 +1,6 @@
 CREATE TABLE t_teams (
     id_team SERIAL PRIMARY KEY,
-    team VARCHAR(100)
+    team VARCHAR(100) UNIQUE
 );
 
 CREATE TABLE t_pers (
@@ -8,7 +8,8 @@ CREATE TABLE t_pers (
     name VARCHAR(100),
     firstname VARCHAR(100),
     id_team INTEGER,
-    CONSTRAINT fk_team FOREIGN KEY (id_team) REFERENCES t_teams (id_team)
+    CONSTRAINT fk_team FOREIGN KEY (id_team) REFERENCES t_teams (id_team),
+    CONSTRAINT uq_name_firstname UNIQUE (name, firstname)
 );
 
 CREATE TABLE t_admin (
@@ -18,12 +19,12 @@ CREATE TABLE t_admin (
 CREATE TABLE t_subject_types (
     id_subject_type SERIAL PRIMARY KEY,
     color_hex VARCHAR(9) CHECK (color_hex ~ '^#[0-9A-Fa-f]{3,8}$'),
-    type VARCHAR(100)
+    type VARCHAR(100) UNIQUE
 );
 
 CREATE TABLE t_subjects (
     id_subject SERIAL PRIMARY KEY,
-    subject VARCHAR(100),
+    subject VARCHAR(100) UNIQUE,
     id_subject_type INTEGER,
     CONSTRAINT fk_type FOREIGN KEY (id_subject_type) REFERENCES t_subject_types (id_subject_type)
 );
