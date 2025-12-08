@@ -16,7 +16,11 @@ const pool = new Pool({
 });
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3000',
+  methods: 'GET,POST,PUT,DELETE',
+  allowedHeaders: 'Content-Type,Authorization'
+}));
 
 interface DataRow {
   id_pers: number;
@@ -1093,6 +1097,159 @@ app.delete('/api/color-mapping/:id', async (req, res) => {
     res.json({ message: 'Color mapping deleted successfully' });
   } catch (error) {
     console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// API endpoint for workload plan import
+app.post('/api/workload-import', async (req, res) => {
+  const { data } = req.body;
+
+  if (!data || !Array.isArray(data)) {
+    return res.status(400).json({ error: 'Invalid data format' });
+  }
+
+  try {
+    let importedCount = 0;
+    let skippedCount = 0;
+    const skippedLines = [];
+
+    for (const row of data) {
+      // Find person (do not create if not found)
+      let id_pers;
+      const personQuery = `
+        SELECT id_pers FROM t_pers WHERE name = $1 AND firstname = $2
+      `;
+      const personResult = await pool.query(personQuery, [row.name, row.firstname]);
+
+      if (personResult.rows.length === 0) {
+        // Person does not exist, skip this line
+        skippedCount++;
+        skippedLines.push({
+          name: row.name,
+          firstname: row.firstname,
+          subject: row.subject,
+          type: row.type,
+          reason: 'Person not found'
+        });
+        continue;
+      } else {
+        id_pers = personResult.rows[0].id_pers;
+      }
+
+      // Find subject (do not create if not found)
+      let id_subject;
+      let existingSubjectTypeId;
+      const subjectQuery = `
+        SELECT id_subject, id_subject_type FROM t_subjects WHERE subject = $1
+      `;
+      const subjectResult = await pool.query(subjectQuery, [row.subject]);
+
+      if (subjectResult.rows.length === 0) {
+        // Subject does not exist, skip this line
+        skippedCount++;
+        skippedLines.push({
+          name: row.name,
+          firstname: row.firstname,
+          subject: row.subject,
+          type: row.type,
+          reason: 'Subject not found'
+        });
+        continue;
+      } else {
+        id_subject = subjectResult.rows[0].id_subject;
+        existingSubjectTypeId = subjectResult.rows[0].id_subject_type;
+      }
+
+      // Find subject type (do not create if not found)
+      let id_subject_type;
+      const typeQuery = `
+        SELECT id_subject_type FROM t_subject_types WHERE type = $1
+      `;
+      const typeResult = await pool.query(typeQuery, [row.type]);
+
+      if (typeResult.rows.length === 0) {
+        // Subject type does not exist, skip this line
+        skippedCount++;
+        skippedLines.push({
+          name: row.name,
+          firstname: row.firstname,
+          subject: row.subject,
+          type: row.type,
+          reason: 'Type not found'
+        });
+        continue;
+      } else {
+        id_subject_type = typeResult.rows[0].id_subject_type;
+      }
+
+      // Validate that the subject type matches the subject's type
+      if (existingSubjectTypeId && existingSubjectTypeId !== id_subject_type) {
+        // Type does not match the subject's type, skip this line
+        skippedCount++;
+        skippedLines.push({
+          name: row.name,
+          firstname: row.firstname,
+          subject: row.subject,
+          type: row.type,
+          reason: `Type ${row.type} does not match subject's type`
+        });
+        continue;
+      }
+
+      // Update or create comment
+      const checkCommentQuery = `
+        SELECT * FROM t_comment WHERE id_pers = $1 AND id_subject = $2
+      `;
+      const checkCommentResult = await pool.query(checkCommentQuery, [id_pers, id_subject]);
+
+      if (checkCommentResult.rows.length > 0) {
+        // Comment exists, update it
+        const updateCommentQuery = `
+          UPDATE t_comment SET comment = $1 WHERE id_pers = $2 AND id_subject = $3
+        `;
+        await pool.query(updateCommentQuery, [row.comment || '', id_pers, id_subject]);
+      } else {
+        // Comment doesn't exist, insert it
+        const insertCommentQuery = `
+          INSERT INTO t_comment (id_pers, id_subject, comment) VALUES ($1, $2, $3)
+        `;
+        await pool.query(insertCommentQuery, [id_pers, id_subject, row.comment || '']);
+      }
+
+      // Process each date column (YYYYMM format)
+      for (const [key, value] of Object.entries(row)) {
+        if (key.length === 6 && /^\d{6}$/.test(key)) {
+          const month = key;
+          const load = parseInt(value as string, 10) || 0;
+
+          // Check if record exists
+          const checkPdcQuery = `
+            SELECT * FROM t_pdc WHERE id_pers = $1 AND id_subject = $2 AND month = $3
+          `;
+          const checkPdcResult = await pool.query(checkPdcQuery, [id_pers, id_subject, month]);
+
+          if (checkPdcResult.rows.length > 0) {
+            // Update existing record
+            await pool.query('UPDATE t_pdc SET load = $1 WHERE id_pers = $2 AND id_subject = $3 AND month = $4', [load, id_pers, id_subject, month]);
+          } else {
+            // Insert new record
+            await pool.query('INSERT INTO t_pdc (id_pers, id_subject, month, load) VALUES ($1, $2, $3, $4)', [id_pers, id_subject, month, load]);
+          }
+        }
+      }
+
+      importedCount++;
+    }
+
+    res.json({
+      importedCount,
+      skipped: skippedCount,
+      skippedLines,
+      message: 'Workload data imported successfully'
+    });
+  } catch (error) {
+    console.error('Import error:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
